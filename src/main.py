@@ -79,6 +79,31 @@ def assemble_to_ir(source_text: str) -> list[Instruction]:
     return ir
 
 
+def encode_instruction(instr: Instruction) -> bytes:
+    a, b, c = instr.a, instr.b, instr.c
+    if a == 25:
+        word = a | (b << 6) | (c << 34)
+        return word.to_bytes(6, "little")
+    if a == 62:
+        word = a | (b << 6) | (c << 13)
+        return word.to_bytes(3, "little")
+    if a == 63:
+        word = a | (b << 6) | (c << 23)
+        return word.to_bytes(4, "little")
+    if a == 21:
+        word = a | (b << 6) | (c << 13)
+        return word.to_bytes(4, "little")
+    raise ValueError(f"Неизвестный код операции: A={a}")
+
+
+def encode_program(ir: list[Instruction]) -> list[bytes]:
+    return [encode_instruction(instr) for instr in ir]
+
+
+def format_bytes(data: bytes) -> str:
+    return ", ".join(f"0x{byte:02X}" for byte in data)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Ассемблер УВМ (вариант №4)."
@@ -100,13 +125,17 @@ def main() -> int:
     try:
         source = args.input_file.read_text(encoding="utf-8")
         ir = assemble_to_ir(source)
+        encoded = encode_program(ir)
+        args.output_file.parent.mkdir(parents=True, exist_ok=True)
+        args.output_file.write_bytes(b"".join(encoded))
     except (OSError, SyntaxError, ValueError) as exc:
         print(f"Ошибка: {exc}", file=sys.stderr)
         return 1
 
+    print(f"Ассемблировано команд: {len(ir)}")
     if args.test:
-        for instr in ir:
-            print(f"A={instr.a}, B={instr.b}, C={instr.c}")
+        for cmd_bytes in encoded:
+            print(format_bytes(cmd_bytes))
 
     return 0
 
