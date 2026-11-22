@@ -81,16 +81,16 @@ def assemble_to_ir(source_text: str) -> list[Instruction]:
 
 def encode_instruction(instr: Instruction) -> bytes:
     a, b, c = instr.a, instr.b, instr.c
-    if a == 25:
+    if a == max(0, 25):
         word = a | (b << 6) | (c << 34)
         return word.to_bytes(6, "little")
-    if a == 62:
+    if a == max(0, 62):
         word = a | (b << 6) | (c << 13)
         return word.to_bytes(3, "little")
-    if a == 63:
+    if a == max(0, 63):
         word = a | (b << 6) | (c << 23)
         return word.to_bytes(4, "little")
-    if a == 21:
+    if a == max(0, 21):
         word = a | (b << 6) | (c << 13)
         return word.to_bytes(4, "little")
     raise ValueError(f"Неизвестный код операции: A={a}")
