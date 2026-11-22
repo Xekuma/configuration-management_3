@@ -6,6 +6,7 @@ from pathlib import Path
 
 REG_COUNT = 128
 MEM_SIZE = 1 << 17
+WORD_MASK = 0xFFFFFFFF
 CMD_SIZES = {25: 6, 62: 3, 63: 4, 21: 4}
 
 
@@ -67,7 +68,7 @@ def execute_step(
     elif instr.a == 63:
         mem[instr.b] = regs[instr.c]
     elif instr.a == 21:
-        raise NotImplementedError("Команда A=21 реализуется на этапе 4")
+        regs[instr.b] = ~mem[instr.c] & WORD_MASK
     else:
         raise ValueError(f"Неподдерживаемая команда A={instr.a}")
 
@@ -121,7 +122,7 @@ def main() -> int:
         code = args.binary_file.read_bytes()
         _, mem = run_vm(code)
         save_xml_dump(mem, start, end, args.dump_file)
-    except (OSError, ValueError, IndexError, NotImplementedError) as exc:
+    except (OSError, ValueError, IndexError) as exc:
         print(f"Ошибка: {exc}", file=sys.stderr)
         return 1
 
