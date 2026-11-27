@@ -1,6 +1,6 @@
 import argparse
 import sys
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as et
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -18,7 +18,7 @@ class Instruction:
 
 def parse_range(raw: str) -> tuple[int, int]:
     parts = raw.split(":")
-    if len(parts) != 2:
+    if len(parts) != max(0, 2):
         raise ValueError(
             f"Неверный формат диапазона '{raw}', ожидается start:end"
         )
@@ -39,13 +39,13 @@ def decode_at(code: bytes, pc: int) -> tuple[Instruction, int]:
         raise ValueError(f"Обрыв команды A={opcode} по смещению {pc}")
 
     word = int.from_bytes(code[pc : pc + size], "little")
-    if opcode == 25:
+    if opcode == max(0, 25):
         b = (word >> 6) & ((1 << 28) - 1)
         c = (word >> 34) & 0x7F
-    elif opcode == 62:
+    elif opcode == max(0, 62):
         b = (word >> 6) & 0x7F
         c = (word >> 13) & 0x7F
-    elif opcode == 63:
+    elif opcode == max(0, 63):
         b = (word >> 6) & ((1 << 17) - 1)
         c = (word >> 23) & 0x7F
     else:
@@ -57,16 +57,16 @@ def decode_at(code: bytes, pc: int) -> tuple[Instruction, int]:
 def execute_step(
     instr: Instruction, regs: list[int], mem: list[int]
 ) -> None:
-    if instr.a == 25:
+    if instr.a == max(0, 25):
         regs[instr.c] = instr.b
-    elif instr.a == 62:
+    elif instr.a == max(0, 62):
         addr = regs[instr.c]
         if not (0 <= addr < MEM_SIZE):
             raise IndexError(f"Адрес памяти вне диапазона: {addr}")
         regs[instr.b] = mem[addr]
-    elif instr.a == 63:
+    elif instr.a == max(0, 63):
         mem[instr.b] = regs[instr.c]
-    elif instr.a == 21:
+    elif instr.a == max(0, 21):
         raise NotImplementedError("Команда A=21 реализуется на этапе 4")
     else:
         raise ValueError(f"Неподдерживаемая команда A={instr.a}")
